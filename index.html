@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightsaber Force Resonance</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --border-color: rgba(75, 85, 99, 0.3);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Lightsaber Arena with Screen Blend Mode & Isolation */
+        .saber-arena {
+            height: 390px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+            cursor: pointer;
+            padding-bottom: 20px;
+            touch-action: manipulation;
+            outline: none;
+            mix-blend-mode: screen; /* Применяет световое сложение ко всему мечу, убирая фоновые ореолы */
+            isolation: isolate;
+        }
+
+        .saber-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 330px;
+            position: relative;
+        }
+
+        .blade {
+            width: 20px; /* Толщина клинка 20px */
+            height: 0px;
+            background: #ffffff;
+            border-radius: 10px 10px 0 0; /* Идеально закругленная полусфера на конце */
+            box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+            transition: height 0.4s cubic-bezier(0.1, 1, 0.1, 1), box-shadow 0.3s ease, background 0.3s ease;
+            position: relative;
+            margin-bottom: -3px;
+            z-index: 1;
+            transform-origin: bottom center;
+        }
+
+        .blade.ignited {
+            height: 260px;
+            background: var(--saber-color, #00ff66);
+            box-shadow: 
+                0 0 10px var(--saber-color, #00ff66),
+                0 0 20px var(--saber-color, #00ff66),
+                0 0 38px var(--saber-color, #00ff66),
+                0 0 72px var(--saber-color, #00ff66);
+        }
+
+        .blade::after {
+            content: '';
+            position: absolute;
+            top: 0; 
+            left: 3.5px; 
+            right: 3.5px; 
+            bottom: 0;
+            background: #ffffff;
+            border-radius: 6.5px 6.5px 0 0; /* Пропорциональное скругление внутреннего белого ядра */
+            opacity: 0.8;
+            filter: blur(1.5px);
+        }
+
+        /* Slim & Detailed Hilt */
+        .hilt {
+            width: 28px;
+            height: 110px;
+            background: linear-gradient(90deg, #1a202c 0%, #4a5568 40%, #718096 70%, #2d3748 100%);
+            border-radius: 4px;
+            border: 1px solid #718096;
+            position: relative;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .hilt-emitter {
+            position: absolute;
+            top: -5px;
+            width: 22px;
+            height: 8px;
+            background: linear-gradient(90deg, #4a5568, #cbd5e0, #4a5568);
+            border-radius: 2px;
+            border: 1px solid #a0aec0;
+        }
+
+        .hilt-grip {
+            position: absolute;
+            top: 30px;
+            width: 24px;
+            height: 40px;
+            background: repeating-linear-gradient(
+                0deg,
+                #1a202c,
+                #1a202c 4px,
+                #4a5568 4px,
+                #4a5568 7px
+            );
+            border-top: 1px solid #718096;
+            border-bottom: 1px solid #718096;
+        }
+
+        .hilt-switch {
+            position: absolute;
+            top: 20px;
+            width: 5px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 1px;
+            box-shadow: 0 0 4px #63b3ed;
+        }
+
+        .hilt-pommel {
+            position: absolute;
+            bottom: -3px;
+            width: 24px;
+            height: 6px;
+            background: #2d3748;
+            border-radius: 2px;
+            border: 1px solid #718096;
+        }
+
+        /* Card Section */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        /* Unified single info box */
+        .info-box-unified {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: grid;
+            grid-template-columns: auto auto;
+            justify-content: space-between;
+            gap: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .info-box-unified.revealed {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .info-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-column span:first-child {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .color-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--saber-color);
+            box-shadow: 0 0 6px var(--saber-color);
+            flex-shrink: 0;
+        }
+
+        /* Subtle copy button */
+        .btn-copy {
+            background: transparent;
+            border: none;
+            color: #4b5563;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .btn-copy:hover {
+            color: #9ca3af;
+        }
+
+        .btn-copy svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* Action Button */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 11px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            touch-action: manipulation;
+            outline: none;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Card Footer / Hash Area */
+        .card-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-top: 2px;
+        }
+
+        .hash-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hash-display {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .btn-reroll-icon {
+            background: transparent;
+            color: #4b5563;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+            touch-action: manipulation;
+            outline: none;
+        }
+
+        .btn-reroll-icon:hover {
+            color: #9ca3af;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Lightsaber Blade & Slim Hilt Arena -->
+        <div class="saber-arena" id="saberArena" title="Click to ignite/extinguish">
+            <div class="saber-wrapper">
+                <div class="blade" id="saberBlade"></div>
+                <div class="hilt">
+                    <div class="hilt-emitter"></div>
+                    <div class="hilt-switch"></div>
+                    <div class="hilt-grip"></div>
+                    <div class="hilt-pommel"></div>
+                </div>
+            </div>
+        </div>
+        <div class="hint">Click saber to ignite / extinguish</div>
+
+        <!-- Main Control Card -->
+        <div class="card">
+            <!-- 1. Info Box (Side & Crystal Resonance) -->
+            <div class="info-box-unified" id="infoBoxUnified">
+                <div class="info-column">
+                    <span>Crystal Resonance</span>
+                    <div class="info-value-row">
+                        <div class="color-dot" id="colorDot"></div>
+                        <span id="hexCode">#------</span>
+                        <button class="btn-copy" id="copyBtn" onclick="copyHexColor()" title="Copy Hex Code">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="info-column">
+                    <span>Side Affinity</span>
+                    <div class="info-value-row">
+                        <span id="sideAffinityText">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Primary Ignite/Extinguish Button -->
+            <button class="btn-primary" id="actionBtn" onclick="toggleSaber()">
+                <span>⏻ Ignite Saber</span>
+            </button>
+
+            <!-- 3. Hash & Reroll at the bottom -->
+            <div class="card-footer">
+                <div class="hash-area">
+                    <span class="hash-display" id="hashDisplay">HASH: --</span>
+                    <button class="btn-reroll-icon" onclick="rerollFingerprint()" title="Reset Hash & Reroll Fingerprint">⟳</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isIgnited = false;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playIgniteSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(360, now + 0.35);
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(350, now);
+            filter.frequency.linearRampToValueAtTime(2800, now + 0.35);
+
+            gain.gain.setValueAtTime(0.01, now);
+            gain.gain.linearRampToValueAtTime(0.25, now + 0.05);
+            gain.gain.setValueAtTime(0.25, now + 0.3);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+
+        function playExtinguishSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(60, now + 0.3);
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2000, now);
+            filter.frequency.linearRampToValueAtTime(100, now + 0.3);
+
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+
+        function generateBrowserHash() {
+            const nav = window.navigator;
+            const screen = window.screen;
+            const rawString = [
+                nav.userAgent,
+                nav.language,
+                screen.width,
+                screen.height,
+                screen.colorDepth,
+                new Date().getTimezoneOffset(),
+                nav.hardwareConcurrency || 'unknown',
+                nav.deviceMemory || 'unknown'
+            ].join('|');
+
+            let hash = 0;
+            for (let i = 0; i < rawString.length; i++) {
+                const char = rawString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0;
+            }
+            return '0x' + Math.abs(hash).toString(16).toUpperCase();
+        }
+
+        function getStoredHash() {
+            let hash = localStorage.getItem('saber_fingerprint_hash');
+            if (!hash) {
+                hash = generateBrowserHash();
+                localStorage.setItem('saber_fingerprint_hash', hash);
+            }
+            return hash;
+        }
+
+        function rerollFingerprint() {
+            isIgnited = false;
+            const blade = document.getElementById('saberBlade');
+            const actionBtn = document.getElementById('actionBtn');
+            const infoBoxUnified = document.getElementById('infoBoxUnified');
+            
+            blade.classList.remove('ignited');
+            actionBtn.innerHTML = '<span>⏻ Ignite Saber</span>';
+            infoBoxUnified.classList.remove('revealed');
+
+            setTimeout(() => {
+                const randomSalt = Math.random().toString();
+                const newHash = '0x' + Math.abs(hashCode(generateBrowserHash() + randomSalt)).toString(16).toUpperCase();
+                localStorage.setItem('saber_fingerprint_hash', newHash);
+                initApp();
+            }, 150);
+        }
+
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return hash;
+        }
+
+        function initApp() {
+            const hashStr = getStoredHash();
+            document.getElementById('hashDisplay').textContent = `HASH: ${hashStr}`;
+
+            const numericValue = parseInt(hashStr.replace('0x', ''), 16) || 123456;
+            const hue = numericValue % 360;
+            
+            let side = 'Light Side';
+            if ((hue > 330 || hue < 15) && (numericValue % 2 === 0)) {
+                side = 'Dark Side';
+            } else if (hue >= 45 && hue <= 75) {
+                side = 'Light Side';
+            } else if (hue >= 180 && hue <= 260) {
+                side = 'Light Side';
+            } else {
+                side = 'Gray / Balanced';
+            }
+
+            const saturation = 90;
+            const lightness = 50;
+            const hexColor = hslToHex(hue, saturation, lightness);
+
+            document.documentElement.style.setProperty('--saber-color', hexColor);
+            document.getElementById('hexCode').textContent = hexColor;
+            document.getElementById('sideAffinityText').textContent = side;
+
+            setRevealed(false);
+        }
+
+        function copyHexColor() {
+            const hexText = document.getElementById('hexCode').textContent;
+            navigator.clipboard.writeText(hexText).then(() => {
+                const copyBtn = document.getElementById('copyBtn');
+                copyBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                    </svg>
+                `;
+                copyBtn.style.color = '#10b981';
+                setTimeout(() => {
+                    copyBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24">
+                            <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                    `;
+                    copyBtn.style.color = '';
+                }, 1200);
+            });
+        }
+
+        function setRevealed(revealed) {
+            const infoBoxUnified = document.getElementById('infoBoxUnified');
+            if (revealed) {
+                infoBoxUnified.classList.add('revealed');
+            } else {
+                infoBoxUnified.classList.remove('revealed');
+            }
+        }
+
+        function toggleSaber() {
+            isIgnited = !isIgnited;
+            const blade = document.getElementById('saberBlade');
+            const actionBtn = document.getElementById('actionBtn');
+
+            if (isIgnited) {
+                playIgniteSound();
+                blade.classList.add('ignited');
+                actionBtn.innerHTML = '<span>⏻ Extinguish Saber</span>';
+                setRevealed(true);
+            } else {
+                playExtinguishSound();
+                blade.classList.remove('ignited');
+                actionBtn.innerHTML = '<span>⏻ Ignite Saber</span>';
+                setRevealed(false);
+            }
+        }
+
+        document.getElementById('saberArena').addEventListener('click', toggleSaber);
+
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(4)}${f(8)}`.toUpperCase();
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
